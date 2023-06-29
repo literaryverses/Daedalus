@@ -1,9 +1,4 @@
 from random import randint, random, shuffle, choice
-'''
-NOTES:
--binary trees, sidewinder, recursive_backtracking, ellers, twist_and_turn, and kruskals are for orthogonal grids only
--do not use the following algos for masking
-'''
 
 
 class Cell:
@@ -473,13 +468,3 @@ class HexGrid(Grid):  # sigma maze (shape = 6)
       for x in range(3):
         triGrid.mask(row, col + x, lvl)  # top row of hexagon
         triGrid.mask(row + 1, col + x, lvl)  # bottom row of hexagon
-
-
-from maze_generation import *
-
-grid = Grid(5, 5)
-grid.mask(0, 0)
-grid.mask(4, 4)
-aldousBroder(grid)
-grid.braid()
-print(grid)
