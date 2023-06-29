@@ -1,6 +1,7 @@
 import discord
 import responses
 import os
+from keep_alive import keep_alive
 
 
 async def send_message(message, user_message, is_private):
@@ -34,4 +35,5 @@ def run_discord_bot():
     else:
       await send_message(message, user_message, is_private=False)
 
+  keep_alive()
   client.run(TOKEN)
