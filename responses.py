@@ -50,6 +50,10 @@ def get_response(message: str) -> str:
     note += 'Algorithms available:\naldousBroder\ngrowingTree\nhunt_and_kill\nwilsons\n'
     #note += 'Growing Tree is capable of another parameter from 0 - 1 that determines the number of dead ends\n'
     note += '\nExample: !side 4 !dim 5x5x2 !braid !algo aldousBroder'
+    note += '\nExample: !side 4 !dim 5x5x2 !braid !algo aldousBroder'
+    note += '\nYou can also create messages through \'!message {letters}\'\n'
+    note += 'To implement it vertically, use \'!vertical\' in between'
+    note += '\nExample: !message !vertical hello world!'
     return note
 
   p_message = p_message.split()
