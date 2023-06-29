@@ -42,14 +42,12 @@ def get_response(message: str) -> str:
     note += 'To determine number of sides of a cell\n'
     note += '\n\'!dim [number]x[number]\''
     note += 'To create dimensions of cell (can add one additional dimension to give the maze \'height\')\n'
+    note += '\n!algo [algorithm] to define the maze-generating algorithm\n'
+    note += 'Algorithms available:\naldousBroder\ngrowingTree\nhunt_and_kill\nwilsons\n'
     note += '\nThe following are optional:\n'
     note += '\n\'!braid\' to remove dead ends\n'
     note += '\n\'!mask ([number],[number]),([number],[number]),...\'\n'
     note += 'To separate individual cells from the maze by their coordinates\n'
-    note += '\n!algo [algorithm] to define the maze-generating algorithm\n'
-    note += 'Algorithms available:\naldousBroder\ngrowingTree\nhunt_and_kill\nwilsons\n'
-    #note += 'Growing Tree is capable of another parameter from 0 - 1 that determines the number of dead ends\n'
-    note += '\nExample: !side 4 !dim 5x5x2 !braid !algo aldousBroder'
     note += '\nExample: !side 4 !dim 5x5x2 !braid !algo aldousBroder'
     note += '\nYou can also create messages through \'!message {letters}\'\n'
     note += 'To implement it vertically, use \'!vertical\' in between'
@@ -74,17 +72,21 @@ def get_response(message: str) -> str:
   algoType = 0
 
   for i, command in enumerate(p_message):  # check other commands
+    print(f'\n{i}: {command}\n')
     if command == '!braid':
-      if p_message[i + 1].isdecimal():
+      print('\nBraiding cmd\n')
+      '''if p_message[i + 1].isdecimal():
+        print('\nBraiding decimal check\n')
         braid_p = float(p_message[i + 1])
-      else:
-        braid_p = 1
+    else:'''
+      braid_p = 1
     if command == '!side':
+      print('\n checking if taking in celltype\n')
       cellType = int(p_message[i + 1])
     if command == '!algo':
       algoType = p_message[i + 1]
-      if algoType == 'growingtree' and p_message[i + 2].isdecimal():
-        slider = float(p_message[i + 2])
+      '''if algoType == 'growingtree' and p_message[i + 2].isdecimal():
+        slider = float(p_message[i + 2])'''
     if command == '!dim':
       if gridx and gridy and gridz:
         continue
