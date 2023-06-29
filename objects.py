@@ -60,7 +60,7 @@ class Grid:  # orthogonal maze (shape == 4) by default
     self.__prepareGrid(shape)
 
   def __str__(self):
-    is_print_horizontal = False if 10 * self.rows < self.cols else True
+    is_print_horizontal = False if 20 < self.cols * self.lvls else True
     maze = ''
     for row in self.each_row():
       row_layout = [''] * 3
