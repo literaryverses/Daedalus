@@ -1,23 +1,37 @@
 import discord
+import responses
 import os
 
-client = discord.Client(intents=discord.Intents.default())
 
-TOKEN = os.environ['BOT_TOKEN']
-
-
-@client.event
-async def on_ready():
-  print(f'we have logged in as {client}')
-
-
-@client.event
-async def on_message(message):
-  if message.author == client.user:
-    return
-
-  if message.content.startswith('$Hello'):
-    await message.channel.send('Hello!')
+async def send_message(message, user_message, is_private):
+  try:
+    response = responses.get_response(user_message)
+    await message.author.send(
+      response) if is_private else await message.channel.send(response)
+  except Exception as e:
+    print(e)
 
 
-client.run(TOKEN)
+def run_discord_bot():
+  TOKEN = os.environ['BOT_TOKEN']
+  intents = discord.Intents.default()
+  intents.message_content = True
+  client = discord.Client(intents=intents)
+
+  @client.event
+  async def on_ready():
+    print(f'{client.user} is now running!')
+
+  @client.event
+  async def on_message(message):
+    if message.author == client.user:
+      return
+
+    user_message = str(message.content)
+    if user_message[0] == '?':
+      user_message = user_message[1:]
+      await send_message(message, user_message, is_private=True)
+    else:
+      await send_message(message, user_message, is_private=False)
+
+  client.run(TOKEN)
