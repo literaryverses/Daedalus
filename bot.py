@@ -7,8 +7,14 @@ from keep_alive import keep_alive
 async def send_message(message, user_message, is_private):
   try:
     response = responses.get_response(user_message)
-    await message.author.send(
-      response) if is_private else await message.channel.send(response)
+    if len(response) > 2000:
+      with open("result.txt", "wb+") as file:
+        file.write(response)
+        await message.channel.send("Your maze is:",
+                                   file=discord.File(file, "result.txt"))
+    else:
+      await message.author.send(
+        response) if is_private else await message.channel.send(response)
   except Exception as e:
     print(e)
 
