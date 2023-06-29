@@ -264,6 +264,8 @@ class Grid:  # orthogonal maze (shape == 4) by default
         continue
       # get unlinked neighbors
       neighbors = list(filter(notLinked, cell.getNeighbors()))
+      if not neighbors:  # if neighbors is empty (corner in TriGrid)
+        continue
       # best option is joining two dead ends
       best = list(filter(deadEnds, neighbors))
       if not best:
