@@ -234,7 +234,7 @@ def alphabet(phrase: str):  # letter coordinates for masking
       coord_letters.append((y + 4, x + 2))
     elif letter == '.':
       coord_letters.append((y + 4, x + 2))
-    elif letter == '\n':  # space operates as newline
+    elif letter == ' ':  # space operates as newline
       x = -5
       y += 6  # reset pointer
     x += 6  # increment for next word
@@ -247,7 +247,7 @@ def __mazify(grid, coord, isHole):  # recursive backtracker
   while stack:
     cell = stack[-1]
     if isHole:
-      grid.secret_mask(coord[0], coord[1])
+      grid.mask_alone(coord[0], coord[1])
     neighbors = [n for n in cell.getNeighbors() if not n.getLinks()]
     if neighbors:
       neighbor = sample(neighbors, 1)[0]
@@ -259,7 +259,7 @@ def __mazify(grid, coord, isHole):  # recursive backtracker
 
 
 def mask_word(phrase: str) -> Grid:  # inputs string and outputs maze
-  words = phrase.split('\n')
+  words = phrase.split(' ')
   total_rows = 6 * len(words) + 1
   total_cols = 6 * len(max(words, key=len)) + 1
   grid = Grid(total_rows, total_cols)
@@ -268,4 +268,4 @@ def mask_word(phrase: str) -> Grid:  # inputs string and outputs maze
     grid.mask(coord[0], coord[1])
   for coord in coord_holes:
     __mazify(grid, coord, True)
-  return __mazify(grid, grid.getRandom().coord, False)
+  return str(__mazify(grid, grid.getRandom().coord, False))
