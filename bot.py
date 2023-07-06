@@ -21,6 +21,10 @@ async def send_message(message, user_message, is_private):
         response) if is_private else await message.channel.send(
           f"```\n{response}```")
   except Exception as e:
+    response = 'Either you formatted incorrectly or there is a bug :(\nPlease report this to @perineaflorum'
+    await message.author.send(response
+                              ) if is_private else await message.channel.send(
+                                f"```\n{response}```")
     print(e)
 
 
@@ -40,11 +44,12 @@ def run_discord_bot():
       return
 
     user_message = str(message.content)
-    if user_message[0] == '?':
-      user_message = user_message[1:]
-      await send_message(message, user_message, is_private=True)
-    else:
-      await send_message(message, user_message, is_private=False)
+    if user_message[:4] == '$bot':
+      if user_message[5:13] == '$private':
+        user_message = user_message[1:]
+        await send_message(message, user_message, is_private=True)
+      else:
+        await send_message(message, user_message, is_private=False)
 
   keep_alive()
   client.run(TOKEN)
