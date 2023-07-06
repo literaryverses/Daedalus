@@ -7,8 +7,8 @@ from re import compile
 def get_response(message: str) -> str:
   p_message = message.lower()
 
-  # get dimensions
-  dimRegex = compile(r'\d+x\d+(?:x\d+)?')
+  # get dimensions via regex
+  dimRegex = compile(r'\$dim\s(\d+x\d+(?:x\d+)?)')
   dim = dimRegex.findall(p_message)
   if dim and len(dim) == 1:
     dim = dim[0].split('x')
@@ -18,7 +18,7 @@ def get_response(message: str) -> str:
   elif dim:  # extra dimensions were provided
     return 'Please only give one set of dimensions'
 
-  # get masks
+  # get masks via regex
   masks = []
   maskRegex = compile(r'\d+,\d+(?:,\d+)?|\d+, \d+(?:, \d+)?')
   for mask in maskRegex.findall(p_message):
@@ -32,89 +32,92 @@ def get_response(message: str) -> str:
     masks.append((y, x, z))
 
   # response to hello or hi
-  if p_message == 'hello' or p_message == 'hi':
+  if p_message == '$bot hello' or p_message == '$bot hi':
     return f"\n{mask_word('hi')}"
 
   # instructions when requested
-  if p_message == '!help':
-    note = 'The following parameters are required to create a maze\n'
-    note += '\'!side [number = 3 or 4 or 6]\'\n'
+  if p_message == '$bot $help':
+    note = 'THE FOLLOWING PARAMETERS ARE REQUIRED TO MAKE A MAZE:\n'
+    note += '\n\'$bot\' to recieve a response from a bot\n'
+    note += '\n\'$side [number = 3 or 4 or 6]\'\n'
     note += 'To determine number of sides of a cell\n'
-    note += '\n\'!dim [number]x[number]\''
+    note += '\n\'$dim [number]x[number]\'\n'
     note += 'To create dimensions of cell (can add one additional dimension to give the maze \'height\')\n'
-    note += '\n!algo [algorithm] to define the maze-generating algorithm\n'
-    note += 'Algorithms available:\naldousBroder\ngrowingTree\nhunt_and_kill\nwilsons\n'
-    note += '\nThe following are optional:\n'
-    note += '\n\'!braid\' to remove dead ends\n'
-    note += '\n\'!mask ([number],[number]),([number],[number]),...\'\n'
+    note += '\n$algo [algorithm] to define the maze-generating algorithm\n'
+    note += '\nAlgorithms available:\naldousBroder\ngrowingTree\nhunt_and_kill\nwilsons\n'
+    note += '\nGrowing Tree is capable of another parameter from 0 - 1 (express as decimal) that determines the number of dead ends\n'
+    note += '\nTHE FOLLOWING PARAMETERS ARE OPTIONAL:\n'
+    note += '\n$\'private\' after \'$bot\' for the bot to private message you\n'
+    note += '\n\'$braid [proportion as decimal]\' to remove dead ends by a rate of [proportion]\n'
+    note += '\n\'$mask ([number],[number]),([number],[number]),...\'\n'
     note += 'To separate individual cells from the maze by their coordinates\n'
-    note += '\nExample: !side 4 !dim 5x5x2 !braid !algo aldousBroder'
-    note += '\nYou can also create messages through \'!message {letters}\'\n'
-    note += 'To implement it vertically, use \'!vertical\' in between'
-    note += '\nExample: !message !vertical hello world!'
+    note += '\nExamples: $side 4 $dim 5x5x2 $algo aldousBroder\n'
+    note += '\nYou can also create messages through \'$message {letters}\'\n'
+    note += 'To implement it vertically, use \'$vertical\' after \'$message\'\n'
+    note += '\nEXAMPLES:\n$bot $message $vertical hello world!\n$bot $side 4 $dim 5x5x2 $algo aldousBroder\n$bot $side 6 $dim 3x3 $mask (0,0),(2,0) $algo growingTree 1\n$bot $side 3 $dim 12x12 $algo wilsons $braid 0.8'
     return note
 
-  p_message = p_message.split()
+  # generate message
+  vertRegex = compile(r'\$vertical(?! \$message)')
+  isVertical = vertRegex.findall(p_message)  # determine if vertical
+  noteRegex = compile(r'\$message\s(?:\$vertical\s)?([\w\.\!\s]+)')
+  note = noteRegex.findall(p_message)  # extract message
 
-  # creating mazes based off message
-  if p_message[0] == '!message':
-    if p_message[1] == '!vertical':
-      for i in range(2, len(p_message)):
-        p_message[i] = ' '.join(p_message[i])
-      note = '  '.join(p_message[2:])
+  if note:
+    note = note.pop().split()
+    if isVertical:
+      for i in range(len(note)):
+        note[i] = ' '.join(note[i])
+      final_note = '  '.join(note)
     else:
-      note = ' '.join(p_message[1:])
-    return mask_word(note)
+      final_note = ' '.join(note)
+    return mask_word(final_note)
 
-  braid_p = cellType = grid = 0
-  slider = 0.5  # default slider for growingTree
-  #algoType = 'recursive_backtracker'  # default algo
-  algoType = 0
-
-  for i, command in enumerate(p_message):  # check other commands
-    print(f'\n{i}: {command}\n')
-    if command == '!braid':
-      print('\nBraiding cmd\n')
-      '''if p_message[i + 1].isdecimal():
-        print('\nBraiding decimal check\n')
-        braid_p = float(p_message[i + 1])
-    else:'''
-      braid_p = 1
-    if command == '!side':
-      print('\n checking if taking in celltype\n')
-      cellType = int(p_message[i + 1])
-    if command == '!algo':
-      algoType = p_message[i + 1]
-      '''if algoType == 'growingtree' and p_message[i + 2].isdecimal():
-        slider = float(p_message[i + 2])'''
-    if command == '!dim':
-      if gridx and gridy and gridz:
-        continue
-      else:  # dimensions is not given although command is
-        return 'Please check your formatting on dimensions'
-    if command == '!mask':
-      if not masks:  # masks are not given although command is
-        return 'Please check your formatting on masks'
+  # set defaults
+  braid_p = cellSides = grid = algoType = 0
 
   # create grid
-  if cellType == 4:
+  sideRegex = compile('\$side\s(\d+)')
+  cellSides = sideRegex.search(p_message)
+  if not cellSides:
+    pass
+  elif not gridx or not gridy or not gridz:
+    return 'Please check your formatting on dimensions'
+  elif cellSides.group(1) == '4':
     grid = Grid(gridy, gridx, gridz)
-  elif cellType == 3:
+  elif cellSides.group(1) == '3':
     grid = TriGrid(gridy, gridx, gridz)
-  elif cellType == 6:
+  elif cellSides.group(1) == '6':
     grid = HexGrid(gridy, gridx, gridz)
-  elif cellType:
+  elif cellSides.group(1):
     return 'There are no cells with that number of sides available. Please only use 3, 4, or 6'
 
   # implement masking
-  for mask_coord in masks:
-    grid.mask(*mask_coord)
+  maskRegex = compile(r'\$mask\s')
+  doMask = maskRegex.search(p_message)
+  if doMask and masks:  # if mask cmd detected
+    for mask_coord in masks:
+      grid.mask(*mask_coord)
+  elif doMask:
+    return 'Please check your formatting on masks'
 
   # implement algorithm
-  if algoType == 'wilsons':
-    wilsons(grid)
-  elif algoType == 'growingtree':
+  algoRegex = compile(r'\$algo\s([\w_]+)')
+  algoStr = algoRegex.search(p_message)
+  if not algoStr:
+    pass
+  else:
+    algoType = algoStr.group(1)
+  if algoType == 'growingtree':
+    gtRegex = compile(r'growingtree\s([\d.]+)')
+    sliderStr = gtRegex.search(p_message)
+    if sliderStr:
+      slider = float(sliderStr.group(1))
+    else:
+      slider = 0.5
     growingTree(grid, slider)
+  elif algoType == 'wilsons':
+    wilsons(grid)
   elif algoType == 'aldousbroder':
     aldousBroder(grid)
   elif algoType == 'hunt_and_kill':
@@ -123,6 +126,12 @@ def get_response(message: str) -> str:
     return 'There are no available algorithms with that name. Type !help to see which algorithms are available'
 
   # implement braiding
+  braidRegex = compile(r'\$braid\s([\d.]+)|\$braid[\s$\$]*')
+  braidStr = braidRegex.search(p_message)
+  if braidStr and braidStr.group(1):
+    braid_p = float(braidStr.group(1))
+  elif braidStr:
+    braid_p = 0.5
   if braid_p:
     grid.braid(braid_p)
 
@@ -131,4 +140,4 @@ def get_response(message: str) -> str:
     return str(grid)
 
   # return on all other cases
-  return 'I didn\'t understand what you wrote. Try typing "!help"'
+  return 'I didn\'t understand what you wrote. Try typing "$bot $help"'
